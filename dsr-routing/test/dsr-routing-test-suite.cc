@@ -1,7 +1,7 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 
 // Include a header file from your module to test.
-#include "ns3/dsr-header.h"
+#include "ns3/dsr-routing.h"
 
 // An essential include is test.h
 #include "ns3/test.h"
@@ -11,25 +11,25 @@
 using namespace ns3;
 
 // This is an example TestCase.
-class DsrHeaderTestCase1 : public TestCase
+class DsrRoutingTestCase1 : public TestCase
 {
 public:
-  DsrHeaderTestCase1 ();
-  virtual ~DsrHeaderTestCase1 ();
+  DsrRoutingTestCase1 ();
+  virtual ~DsrRoutingTestCase1 ();
 
 private:
   virtual void DoRun (void);
 };
 
 // Add some help text to this case to describe what it is intended to test
-DsrHeaderTestCase1::DsrHeaderTestCase1 ()
-  : TestCase ("DsrHeader test case (does nothing)")
+DsrRoutingTestCase1::DsrRoutingTestCase1 ()
+  : TestCase ("DsrRouting test case (does nothing)")
 {
 }
 
 // This destructor does nothing but we include it as a reminder that
 // the test case should clean up after itself
-DsrHeaderTestCase1::~DsrHeaderTestCase1 ()
+DsrRoutingTestCase1::~DsrRoutingTestCase1 ()
 {
 }
 
@@ -38,7 +38,7 @@ DsrHeaderTestCase1::~DsrHeaderTestCase1 ()
 // TestCase must implement
 //
 void
-DsrHeaderTestCase1::DoRun (void)
+DsrRoutingTestCase1::DoRun (void)
 {
   // A wide variety of test macros are available in src/core/test.h
   NS_TEST_ASSERT_MSG_EQ (true, true, "true doesn't equal true for some reason");
@@ -50,19 +50,19 @@ DsrHeaderTestCase1::DoRun (void)
 // and enables the TestCases to be run.  Typically, only the constructor for
 // this class must be defined
 //
-class DsrHeaderTestSuite : public TestSuite
+class DsrRoutingTestSuite : public TestSuite
 {
 public:
-  DsrHeaderTestSuite ();
+  DsrRoutingTestSuite ();
 };
 
-DsrHeaderTestSuite::DsrHeaderTestSuite ()
-  : TestSuite ("dsr-header", UNIT)
+DsrRoutingTestSuite::DsrRoutingTestSuite ()
+  : TestSuite ("dsr-routing", UNIT)
 {
   // TestDuration for TestCase can be QUICK, EXTENSIVE or TAKES_FOREVER
-  AddTestCase (new DsrHeaderTestCase1, TestCase::QUICK);
+  AddTestCase (new DsrRoutingTestCase1, TestCase::QUICK);
 }
 
 // Do not forget to allocate an instance of this TestSuite
-static DsrHeaderTestSuite sdsrHeaderTestSuite;
+static DsrRoutingTestSuite sdsrRoutingTestSuite;
 
