@@ -9,13 +9,13 @@
 def build(bld):
     module = bld.create_ns3_module('dsr-routing', ['core'])
     module.source = [
-        # 'model/ipv4-dsr-routing-table-entry.cc',
+        'model/ipv4-dsr-routing-table-entry.cc',
         'model/dsr-header.cc',
-        # 'model/ipv4-dsr-routing.cc',
-        # 'model/dsr-router-interface.cc',
-        # 'model/dsr-route-manager.cc',
-        # 'model/dsr-route-manager-impl.cc',
-        # 'model/dsr-candidate-queue.cc',
+        'model/ipv4-dsr-routing.cc',
+        'model/dsr-router-interface.cc',
+        'model/dsr-route-manager.cc',
+        'model/dsr-route-manager-impl.cc',
+        'model/dsr-candidate-queue.cc',
         # 'model/dsr-application.cc',
         # 'model/dsr-sink.cc',
         'model/dsr-virtual-queue-disc.cc',
@@ -38,13 +38,13 @@ def build(bld):
     headers = bld(features='ns3header')
     headers.module = 'dsr-routing'
     headers.source = [
-        # 'model/ipv4-dsr-routing-table-entry.h',
+        'model/ipv4-dsr-routing-table-entry.h',
         'model/dsr-header.h',
-        # 'model/ipv4-dsr-routing.h',
-        # 'model/dsr-router-interface.h',
-        # 'model/dsr-route-manager.h',
-        # 'model/dsr-route-manager-impl.h',
-        # 'model/dsr-candidate-queue.h',
+        'model/ipv4-dsr-routing.h',
+        'model/dsr-router-interface.h',
+        'model/dsr-route-manager.h',
+        'model/dsr-route-manager-impl.h',
+        'model/dsr-candidate-queue.h',
         # 'model/dsr-application.h',
         # 'model/dsr-sink.h',
         'model/dsr-virtual-queue-disc.h',

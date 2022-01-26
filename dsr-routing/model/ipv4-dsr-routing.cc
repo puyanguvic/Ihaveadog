@@ -32,11 +32,7 @@
 #include "ns3/node.h"
 #include "ipv4-dsr-routing.h"
 #include "dsr-route-manager.h"
-#include "cost-tag.h"
-#include "budget-tag.h"
-#include "flag-tag.h"
-#include "timestamp-tag.h"
-#include "priority-tag.h"
+#include "dsr-header.h"
 
 namespace ns3 {
 
@@ -100,16 +96,6 @@ Ipv4DSRRouting::AddHostRouteTo (Ipv4Address dest,
   m_hostRoutes.push_back (route);
 }
 
-/**
-  * \author Pu Yang
-  * \brief Add a host route to the global routing table with the distance 
-  * between root and destination
-  * \param dest The Ipv4Address destination for this route.
-  * \param nextHop The next hop Ipv4Address
-  * \param interface The network interface index used to send packets to the
-  *  destination
-  * \param distance The distance between root and destination
- */
 void
 Ipv4DSRRouting::AddHostRouteTo (Ipv4Address dest,
                        Ipv4Address nextHop,
@@ -122,8 +108,6 @@ Ipv4DSRRouting::AddHostRouteTo (Ipv4Address dest,
   *route = Ipv4DSRRoutingTableEntry::CreateHostRouteTo(dest, nextHop, interface, distance);
   m_hostRoutes.push_back (route);
 }
-
-
 
 void 
 Ipv4DSRRouting::AddNetworkRouteTo (Ipv4Address network, 
@@ -282,12 +266,6 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<NetDevice> oif)
       rtentry->SetGateway (route->GetGateway ());
       uint32_t interfaceIdx = route->GetInterface ();
       rtentry->SetOutputDevice (m_ipv4->GetNetDevice (interfaceIdx));
-      /**
-       * \author Pu Yang
-       * \brief set the distance
-      */
-      // uint32_t distance = route->GetDistance();
-      // rtentry->SetDistance (distance);
       return rtentry;
     }
   else 
@@ -382,28 +360,18 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
     }
   if (allRoutes.size () > 0 ) // if route(s) is found
     {
-      /**
-       * \author Pu Yang
-       * \todo get all the possible route to the destination, and weight randomly
-       * select a possbile route  
-      */
-      FlagTag flagTag;
-      p->PeekPacketTag (flagTag);
-      BudgetTag budgetTag;
-      p->PeekPacketTag (budgetTag);
-      TimestampTag timestampTag;
-      p->PeekPacketTag (timestampTag);
+      DsrHeader dsrHeader;
+      p->PeekHeader(dsrHeader);
+      uint32_t budget_h = dsrHeader.GetBudget ();
+      Time txTime = dsrHeader.GetTxTime ();
 
-      if (budgetTag.GetBudget () + timestampTag.GetMicroSeconds () < Simulator::Now().GetMicroSeconds ())
+      if (budget_h + txTime.GetMicroSeconds () < Simulator::Now ().GetMicroSeconds ())
       {
         NS_LOG_INFO ("TIMEOUT DROP !!!");
         return 0;
       }
 
-      uint32_t budget = budgetTag.GetBudget () + timestampTag.GetMicroSeconds () - Simulator::Now().GetMicroSeconds (); // in Microseconds
-
-      // std::cout << "budget = " << budgetTag.GetBudget () << "\n";
-      // std::cout << "Old Allroute size = "<< allRoutes.size () << std::endl;
+      uint32_t budget = budget_h + txTime.GetMicroSeconds () - Simulator::Now().GetMicroSeconds (); // in Microseconds
       RouteVec_t fineRoutes;
       RouteVec_t goodRoutes;
       double cost = 0;
@@ -417,7 +385,7 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
           // use FINEROUTE to filter out route beyond packet cost
           if (allRoutes.at(i)->GetDistance () < budget) // push route i to fineRoute if the current budget > route i's cost
             {
-              fineRoutes.push_back(allRoutes.at (i));  // BUG: Route not properly erased
+              fineRoutes.push_back(allRoutes.at (i)); 
               NS_LOG_LOGIC ("FINEROUTE CURRENT NODE GATEWAY " << allRoutes.at (i)->GetGateway());
               cost += allRoutes.at(i)->GetDistance ();
               numFineRoute ++;
@@ -425,7 +393,7 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
           else
             {
               NS_LOG_INFO (" DROP ROUTE: " << allRoutes.at(i)->GetGateway () << " COST: "<< allRoutes.at(i)->GetDistance () );
-              if (flagTag.GetFlagTag () == true)
+              if (dsrHeader.GetFlag () == true)
               {
                 uint32_t q_fast = m_ipv4->GetNetDevice (allRoutes.at(i)->GetInterface ())->GetNode ()->GetObject<TrafficControlLayer> ()->GetRootQueueDiscOnDevice (m_ipv4->GetNetDevice(allRoutes.at (i)->GetInterface()))->GetInternalQueue (0)->GetCurrentSize ().GetValue ();
                 uint32_t q_slow = m_ipv4->GetNetDevice (allRoutes.at(i)->GetInterface ())->GetNode ()->GetObject<TrafficControlLayer> ()->GetRootQueueDiscOnDevice (m_ipv4->GetNetDevice(allRoutes.at (i)->GetInterface()))->GetInternalQueue (1)->GetCurrentSize ().GetValue ();
@@ -439,7 +407,7 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
       if (numFineRoute == 0)
         {
           NS_LOG_ERROR ("NO ROUTE !!! " );
-          if (flagTag.GetFlagTag () == true)
+          if (dsrHeader.GetFlag () == true)
             {
               std::cout << "Budget: "<< budget<< " DROP PACKET: NO ROUTE" << std::endl;
             }
@@ -463,17 +431,6 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
           NS_LOG_INFO (" DROP ROUTE: " << fineRoutes.at(i)->GetGateway () << " COST: "<< fineRoutes.at(i)->GetDistance () );
         }
       }
-        
-  
-
-      // std::cout << "Now goodRoute size = "<< goodRoutes.size () << std::endl;
-      // for (uint32_t i = 0; i < goodRoutes.size (); i++)
-      //   {
-      //     std::cout << "Current Distance: " << goodRoutes.at(i)->GetDistance () << std::endl;
-      //   }
-      
-      // std::sort (allRoutes.begin (), allRoutes.end (), CompareRouteCost);
-
 
       uint32_t internalNqueue = m_ipv4->GetNetDevice (0)->GetNode ()->GetObject<TrafficControlLayer> ()-> GetRootQueueDiscOnDevice (m_ipv4->GetNetDevice(goodRoutes.at (0)->GetInterface()))->GetNInternalQueues();
       uint32_t bf_fast = 12;
@@ -509,7 +466,7 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
         if (ql_fast == bf_fast && ql_slow == bf_slow)
         {
           NS_LOG_ERROR ("All next-hops are congested!! Drop packet");
-          if (flagTag.GetFlagTag () == true)
+          if (dsrHeader.GetFlag () == true)
           {
             std::cout << "DROP PACKETS: TIME OUT DUE TO CONGESTION" << std::endl;
           }
@@ -556,7 +513,7 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
         // total_weight = sum(weight)
         // weight[i] = weight[i]/total_weight
 
-        if (flagTag.GetFlagTag () == true)
+        if (dsrHeader.GetFlag () == true)
           {
             std::cout << "=======================================" << std::endl;
             std::cout << "GoodRoute "<< i << " dn = " << delayFlag << std::endl; // Check the change of queue length
@@ -570,7 +527,7 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
       if (tempSum == 0)
       {
         NS_LOG_ERROR ("All next-hops are congested!! Drop packet");
-        if (flagTag.GetFlagTag () == true)
+        if (dsrHeader.GetFlag () == true)
         {
           std::cout << "DROP PACKETS: TIME OUT" << std::endl;
         }
@@ -581,7 +538,7 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
       uint32_t randInt = m_rand->GetInteger (1, 100);
       uint32_t selectRouteIndex = 0;
       uint32_t selectLaneIndex = 0;
-      if (flagTag.GetFlagTag () == true)
+      if (dsrHeader.GetFlag () == true)
       {
         NS_LOG_LOGIC ("Select route by probability");
         for (uint32_t i = 0; i < goodRoutes.size () * (internalNqueue - 1); i ++)
@@ -628,10 +585,11 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
       
       Ipv4DSRRoutingTableEntry* route;
       route = goodRoutes.at (selectRouteIndex);
-      PriorityTag priorityTag;
-      p->RemovePacketTag (priorityTag);
-      priorityTag.SetPriority (selectLaneIndex);
-      p->AddPacketTag (priorityTag);
+      uint8_t priority = (uint8_t)selectLaneIndex;
+
+      p->RemoveHeader (dsrHeader);
+      dsrHeader.SetPriority (priority);
+      p->AddHeader (dsrHeader);
       
       // create a Ipv4Route object from the selected routing table entry
       rtentry = Create<Ipv4Route> ();
@@ -886,10 +844,14 @@ Ipv4DSRRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDev
 //
   NS_LOG_LOGIC ("Unicast destination- looking up");
   Ptr<Ipv4Route> rtentry; 
-  BudgetTag budgetTag;
-  if (p->PeekPacketTag (budgetTag))
+  DsrHeader dsrHeader;
+  if (p->PeekHeader (dsrHeader))
   {
-    rtentry = LookupDSRRoute (header.GetDestination (), p, oif);
+    uint32_t budget = dsrHeader.GetBudget ();
+    if (budget != 0)
+    {
+      rtentry = LookupDSRRoute (header.GetDestination (), p, oif);
+    }
   }
   else
   {
@@ -898,17 +860,6 @@ Ipv4DSRRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDev
   if (rtentry)
     {
       sockerr = Socket::ERROR_NOTERROR;
-      /**
-       * \author Pu Yang 
-       * \brief add the distance value the the packet tag
-      */
-      CostTag cost;
-      p->RemovePacketTag (cost);
-      // cost.SetCost (rtentry->GetDistance());
-      // p->AddPacketTag (cost);
-      // std::cout << "RO: the output cost = " << rtentry->GetDistance() << " the next hop = " << rtentry->GetOutputDevice() << std::endl;
-      // std::cout << "the cost =" << cost.GetCost() << std::endl; 
-      // std::cout << "the cost =" << rtentry->GetDistance() << std::endl;
     }
   else
     {
@@ -965,17 +916,8 @@ Ipv4DSRRouting::RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr<
   // Next, try to find a route
   NS_LOG_LOGIC ("Unicast destination- looking up global route");
   Ptr<Ipv4Route> rtentry; 
-  BudgetTag budgetTag;
-  // if (p->PeekPacketTag (budgetTag))
-  // {
-  //   rtentry = LookupDSRRoute (header.GetDestination (), p, oif);
-  // }
-  // else
-  // {
-  //   rtentry = LookupDSRRoute (header.GetDestination (), oif);
-  // }
-  
-  if (p->PeekPacketTag (budgetTag))
+  DsrHeader dsrHeader;
+  if (p->PeekHeader (dsrHeader))
   {
     rtentry = LookupDSRRoute (header.GetDestination (), p_copy); 
   }

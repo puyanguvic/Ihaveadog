@@ -22,10 +22,12 @@ public:
 
   DsrApplication ();
   virtual ~DsrApplication();
-
+  // application with udp
   void Setup (Ptr<Socket> socket, Address address, uint32_t packetSize, uint32_t nPackets, DataRate dataRate, uint32_t budget, bool flag);
   void Setup (Ptr<Socket> socket, Address address, uint32_t packetSize, uint32_t nPackets, DataRate dataRate, bool flag);
   void ChangeRate (DataRate newDataRate);
+  // application with TCP
+  void Setup (Ptr<Socket> socket, Address address, )
   void recv (int numBytesRcvd);
 
 private:
