@@ -8,6 +8,10 @@
 #include "dsr-header.h"
 #include "dsr-virtual-queue-disc.h"
 
+#define FAST_LANE 0
+#define SLOW_LANE 1
+#define NORMAL_LANE 2
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("DsrVirtualQueueDisc");
@@ -46,65 +50,12 @@ bool
 DsrVirtualQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
-  DsrHeader header;
-
-  // enqueue best-effort-packet to best-effort-lane
-  if (item->GetPacket()->PeekHeader (header) == 0)
+  uint32_t lane = EnqueueClassify (item);
+  if (GetInternalQueue(lane)->GetCurrentSize ().GetValue() >= LinesSize[lane])
   {
-    if (GetInternalQueue(2)->GetCurrentSize ().GetValue() >= LinesSize[2])
-    {
-      DropBeforeEnqueue (item, LIMIT_EXCEEDED_DROP);
-    }
-    bool retval = GetInternalQueue (2)->Enqueue (item);
-    return retval;
+    DropBeforeEnqueue (item, LIMIT_EXCEEDED_DROP);
   }
-
-  uint8_t priority = header.GetPriority ();
-  bool flag = header.GetFlag ();
-  int32_t budget = header.GetBudget () + header.GetTxTime ().GetMicroSeconds () - Simulator::Now().GetMicroSeconds ();
-  // std::cout << "***** current budget = " << budget << std::endl;
-  
-  if (budget < 0)
-    {
-      NS_LOG_LOGIC ("Timeout dropping");
-      if (flag == true)
-        {
-          std::cout << "DROP PACKETS BEFORE ENQUEUE: TIME OUT" << std::endl;
-        }
-      DropBeforeEnqueue (item, TIMEOUT_DROP); // BUG: This did not work
-      return false;
-    }
-
-  if(priority != 99)
-    {
-      if(GetInternalQueue(priority)->GetCurrentSize ().GetValue() >= LinesSize[priority])
-        {
-          NS_LOG_LOGIC ("The Internal Queue limit exceeded -- dropping packet");
-          DropBeforeEnqueue (item, LIMIT_EXCEEDED_DROP);
-          if (flag == true)
-            {
-              std::cout << "DROP PACKETS: BUFFERBLOAT" << std::endl;
-            }
-          return false;
-        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
-      
-      bool retval = GetInternalQueue (priority)->Enqueue (item);
-      if (!retval)
-        {
-          NS_LOG_WARN ("Packet enqueue failed. Check the size of the internal queues");
-        }
-      NS_LOG_LOGIC ("Number packets band" << priority << ": " <<GetInternalQueue (priority)->GetNPackets ());
-      return retval;
-    }
-  
-  if (GetInternalQueue (2)->GetCurrentSize ().GetValue () >= LinesSize[2])
-    {
-      NS_LOG_LOGIC ("The Normal line Queue limit exceeded -- dropping packet");
-      DropBeforeEnqueue (item, LIMIT_EXCEEDED_DROP);
-      return false;
-    }
-  // std::cout << "The current Internal queue size =" << GetInternalQueue (2) ->GetCurrentSize ().GetValue () << std::endl;
-  bool retval = GetInternalQueue (2)->Enqueue (item);
+  bool retval = GetInternalQueue (lane)->Enqueue (item);
   return retval;
 }
 
@@ -293,4 +244,26 @@ DsrVirtualQueueDisc::Classify ()
   return 88;
 }   
 
+uint32_t
+DsrVirtualQueueDisc::EnqueueClassify (Ptr<QueueDiscItem> item)
+{
+  DsrHeader header;
+
+  if (item->GetPacket()->PeekHeader (header) == 0)
+  {
+    return NORMAL_LANE;
+  }
+
+  uint8_t priority = header.GetPriority ();
+
+  switch (priority)
+  {
+  case 0x00:
+    return FAST_LANE;
+  case 0x01:
+    return SLOW_LANE;
+  default:
+    return NORMAL_LANE;
+  }
+}
 } // namespace ns3

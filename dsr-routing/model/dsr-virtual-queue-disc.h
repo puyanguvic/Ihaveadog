@@ -45,6 +45,7 @@ private:
   virtual bool CheckConfig (void);
   virtual void InitializeParams (void);
   virtual uint32_t Classify (); 
+  virtual uint32_t EnqueueClassify (Ptr<QueueDiscItem> item);
 };
 
 }
