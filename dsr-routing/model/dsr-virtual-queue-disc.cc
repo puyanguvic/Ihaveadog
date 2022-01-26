@@ -4,11 +4,9 @@
 #include "ns3/object-factory.h"
 #include "ns3/queue.h"
 #include "ns3/socket.h"
+#include "ns3/simulator.h"
+#include "dsr-header.h"
 #include "dsr-virtual-queue-disc.h"
-#include "priority-tag.h"
-#include "budget-tag.h"
-#include "timestamp-tag.h"
-#include "flag-tag.h"
 
 namespace ns3 {
 
@@ -48,49 +46,42 @@ bool
 DsrVirtualQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
-  FlagTag flagTag;
-  item->GetPacket ()->PeekPacketTag (flagTag);
-  PriorityTag priorityTag;
-  uint32_t priority;
-  BudgetTag budgetTag;
-  TimestampTag timestampTag;
-  item->GetPacket ()->PeekPacketTag (timestampTag);
-  
-  // Enqueue Best-Effort to best effort lane
-  if (!item->GetPacket ()->PeekPacketTag (budgetTag))
+  DsrHeader header;
+
+  // enqueue best-effort-packet to best-effort-lane
+  if (item->GetPacket()->PeekHeader (header) == 0)
   {
+    if (GetInternalQueue(2)->GetCurrentSize ().GetValue() >= LinesSize[2])
+    {
+      DropBeforeEnqueue (item, LIMIT_EXCEEDED_DROP);
+    }
     bool retval = GetInternalQueue (2)->Enqueue (item);
     return retval;
   }
 
-  item->GetPacket ()->PeekPacketTag (budgetTag);
-  int32_t budget = budgetTag.GetBudget () + timestampTag.GetMicroSeconds () - Simulator::Now().GetMicroSeconds ();
+  uint8_t priority = header.GetPriority ();
+  bool flag = header.GetFlag ();
+  int32_t budget = header.GetBudget () + header.GetTxTime ().GetMicroSeconds () - Simulator::Now().GetMicroSeconds ();
   // std::cout << "***** current budget = " << budget << std::endl;
   
   if (budget < 0)
     {
       NS_LOG_LOGIC ("Timeout dropping");
-      if (flagTag.GetFlagTag () == true)
+      if (flag == true)
         {
           std::cout << "DROP PACKETS BEFORE ENQUEUE: TIME OUT" << std::endl;
         }
       DropBeforeEnqueue (item, TIMEOUT_DROP); // BUG: This did not work
       return false;
     }
-  if(item->GetPacket ()->PeekPacketTag (priorityTag))
+
+  if(priority != 99)
     {
-      priority = priorityTag.GetPriority ();
-      // if (flagTag.GetFlagTag () == true)
-      //   {
-      //     std::cout<< "Enqueue to lane: "<< priority  << "queue size: "<< GetInternalQueue(priority)->GetCurrentSize ().GetValue()<< std::endl; // Check queue length
-      //   }
-      
       if(GetInternalQueue(priority)->GetCurrentSize ().GetValue() >= LinesSize[priority])
         {
           NS_LOG_LOGIC ("The Internal Queue limit exceeded -- dropping packet");
           DropBeforeEnqueue (item, LIMIT_EXCEEDED_DROP);
-          std::cout << "DROP PACKETS: BUFFERBLOAT" << std::endl;
-          if (flagTag.GetFlagTag () == true)
+          if (flag == true)
             {
               std::cout << "DROP PACKETS: BUFFERBLOAT" << std::endl;
             }
@@ -102,7 +93,6 @@ DsrVirtualQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
         {
           NS_LOG_WARN ("Packet enqueue failed. Check the size of the internal queues");
         }
-
       NS_LOG_LOGIC ("Number packets band" << priority << ": " <<GetInternalQueue (priority)->GetNPackets ());
       return retval;
     }
@@ -139,46 +129,6 @@ DsrVirtualQueueDisc::DoDequeue (void)
   NS_LOG_LOGIC ("Queue empty");
   return item;
 }
-
-// Ptr<QueueDiscItem>
-// DsrVirtualQueueDisc::DoDequeue (void)
-// {
-//   NS_LOG_FUNCTION (this);
-
-//   Ptr<QueueDiscItem> item;
-//   /* strict priority queue discipline
-//      dequeue slow lane when the fast lane is empty
-//      dequeue normal lane when the slow lane is empty
-//      shortcoming: may starve the fast lane when there are plenty of packets in the slow/normal lane 
-//      WRR shortcoming: will significant decrease the router effort
-//                       It's not very easy to find a appropriate parameter
-//   */
-//   uint32_t weight[3]= {5, 3, 2};  
-//   for (uint32_t i = 0; i < GetNQueueDiscClasses (); i++)
-//     {
-//       uint32_t account = weight[i];
-//       if (-- account >= 0 && (item = GetQueueDiscClass (i)->GetQueueDisc ()->Dequeue ()) != 0)
-//         {
-//           NS_LOG_LOGIC ("Popped from band " << i << ": " << item);
-//           NS_LOG_LOGIC ("Number packets band " << i << ": " << GetQueueDiscClass (i)->GetQueueDisc ()->GetNPackets ());
-//           QueueSize Q = GetQueueDiscClass (i)->GetQueueDisc ()->GetCurrentSize();
-//           QueueSize B = GetQueueDiscClass (i)->GetQueueDisc ()->GetMaxSize();
-//           if (Q == B)
-//           {
-//             NS_LOG_ERROR ("Buffer bloat at band "<< i << "!!!");
-//             // std::cout << "Buffer bloat at band " << i << "!!!" << std::endl;
-//           }
-
-//           // std::cout << "Buffer size of the lane "<< i << ": " << GetQueueDiscClass (i)->GetQueueDisc ()->GetMaxSize() << std::endl;
-//           // std::cout << "Number of packets in lane "<< i << ": " << GetQueueDiscClass (i)->GetQueueDisc ()->GetCurrentSize() << std::endl;         
-//           return item;
-//         }
-//     }
-  
-//   NS_LOG_LOGIC ("Queue empty");
-//   return item;
-// }
-
 
 Ptr<const QueueDiscItem>
 DsrVirtualQueueDisc::DoPeek (void)

@@ -13,6 +13,8 @@ int main (int argc, char *argv[])
   dsrHeader.SetTxTime (Simulator::Now ());
   uint32_t budget = 100;
   dsrHeader.SetBudget (budget);
+  bool flag = true;
+  dsrHeader.SetFlag (flag);
 
   Ptr<Packet> p = Create<Packet> ();
   std::cout << "packet size1 = " << p->GetSize () << std::endl;

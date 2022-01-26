@@ -23,10 +23,17 @@ class DsrHeader : public Header
    Time GetTxTime (void) const;
    void SetBudget (uint32_t budget);
    uint32_t GetBudget (void) const;
+   void SetPriority (uint8_t priority);
+   uint8_t GetPriority (void) const;
+   void SetFlag (bool flag);
+   bool GetFlag (void) const;
 
  private:
+   uint8_t ID;
    Time m_txTime;
    uint32_t m_budget;
+   uint8_t m_priority;
+   bool m_flag;
  };
 
 }
