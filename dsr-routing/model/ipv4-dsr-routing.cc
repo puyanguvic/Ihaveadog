@@ -845,12 +845,27 @@ Ipv4DSRRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDev
   NS_LOG_LOGIC ("Unicast destination- looking up");
   Ptr<Ipv4Route> rtentry; 
   DsrHeader dsrHeader;
-  if (p->PeekHeader (dsrHeader))
+  if (p == nullptr)
   {
-    uint32_t budget = dsrHeader.GetBudget ();
-    if (budget != 0)
+    std::cout << "p is empty" << std::endl;
+  }
+  else
+  {
+    std::cout << "p is not empty" << std::endl;
+  }
+  if (p != nullptr && p->GetSize () != 0)
+  {
+    if (p->PeekHeader (dsrHeader))
     {
-      rtentry = LookupDSRRoute (header.GetDestination (), p, oif);
+      uint32_t budget = dsrHeader.GetBudget ();
+      if (budget != 0)
+      {
+        rtentry = LookupDSRRoute (header.GetDestination (), p, oif);
+      }
+    }
+    else
+    {
+      rtentry = LookupDSRRoute (header.GetDestination (), oif);
     }
   }
   else
