@@ -16,12 +16,12 @@ def build(bld):
         'model/dsr-route-manager.cc',
         'model/dsr-route-manager-impl.cc',
         'model/dsr-candidate-queue.cc',
-        # 'model/dsr-application.cc',
-        # 'model/dsr-sink.cc',
+        'model/dsr-application.cc',
+        'model/dsr-sink.cc',
         'model/dsr-virtual-queue-disc.cc',
-        # 'helper/ipv4-dsr-routing-helper.cc',
-        # 'helper/dsr-application-helper.cc',
-        # 'helper/dsr-sink-helper.cc',
+        'helper/ipv4-dsr-routing-helper.cc',
+        'helper/dsr-application-helper.cc',
+        'helper/dsr-sink-helper.cc',
         ]
 
     module_test = bld.create_ns3_module_test_library('dsr-routing')
@@ -45,12 +45,12 @@ def build(bld):
         'model/dsr-route-manager.h',
         'model/dsr-route-manager-impl.h',
         'model/dsr-candidate-queue.h',
-        # 'model/dsr-application.h',
-        # 'model/dsr-sink.h',
+        'model/dsr-application.h',
+        'model/dsr-sink.h',
         'model/dsr-virtual-queue-disc.h',
-        # 'helper/ipv4-dsr-routing-helper.h',
-        # 'helper/dsr-application-helper.h',
-        # 'helper/dsr-sink-helper.h',
+        'helper/ipv4-dsr-routing-helper.h',
+        'helper/dsr-application-helper.h',
+        'helper/dsr-sink-helper.h',
         ]
 
     if bld.env.ENABLE_EXAMPLES:

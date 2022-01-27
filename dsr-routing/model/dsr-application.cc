@@ -7,12 +7,8 @@
 #include "ns3/applications-module.h"
 #include "ns3/internet-module.h"
 #include "ns3/flow-monitor-module.h"
-#include "timestamp-tag.h"
-#include "priority-tag.h"
-#include "cost-tag.h"
-#include "budget-tag.h"
-#include "flag-tag.h"
 #include "dsr-application.h"
+#include "dsr-header.h"
 
 
 #define MAX_UINT_32 0xffffffff
@@ -95,25 +91,25 @@ DsrApplication::StopApplication ()
 void
 DsrApplication::SendPacket()
 {
-    Ptr<Packet> packet = Create <Packet> (m_packetSize);
-    TimestampTag txTime;
-    txTime.SetTimestamp(Simulator::Now()); //  Pu need add time shift
-    packet->AddPacketTag(txTime);
-    // std::cout << "The TimeStamp = " << txTime.GetMicroSeconds() << "\t" << "send time" << Simulator::Now().GetMicroSeconds () << std::endl;
-    if (m_budget != MAX_UINT_32)
+    DsrHeader dsrheader;
+    
+    Ptr<Packet> packet = Create <Packet> (m_packetSize - dsrheader.GetSerializedSize ());
+    Time txTime = Simulator::Now ();
+    uint32_t budget;
+    if (m_budget == MAX_UINT_32)
     {
-       BudgetTag budget;
-       budget.SetBudget(m_budget);
-       // std::cout << "----- the budget time = " << budget.GetBudget() << "\t" << m_budget << std::endl;
-       packet->AddPacketTag(budget);
+        budget = 0;
     }
-    
-    // rxy: Add Flag
-    FlagTag flag;
-    flag.SetFlagTag (m_flag);
-    packet->AddPacketTag(flag);
-    // std::cout << "The flag is : " << flag.GetFlagTag() << std::endl;
-    
+    else
+    {
+        budget = m_budget;
+    }
+    bool flag = m_flag;
+    dsrheader.SetTxTime (txTime);
+    dsrheader.SetBudget (budget);
+    dsrheader.SetFlag (flag);
+    packet->AddHeader (dsrheader);
+    // std::cout << "send size: " << packet->GetSize () << std::endl;
     m_socket->Send (packet);
     if(++ m_packetSent < m_nPackets)
     {

@@ -7,6 +7,7 @@
 #include "ns3/point-to-point-module.h"
 #include "ns3/flow-monitor-module.h"
 #include "ns3/dsr-routing-module.h"
+#include "ns3/traffic-control-module.h"
 
 using namespace ns3;
 
@@ -49,7 +50,7 @@ int main (int argc, char *argv[])
   Ptr<Socket> ns3TcpSocket = Socket::CreateSocket (nodes.Get (0), UdpSocketFactory::GetTypeId ());
   uint32_t budget = 30;
   Ptr<DsrApplication> app = CreateObject<DsrApplication> ();
-  app->Setup (ns3TcpSocket, sinkAddress, 200, 1500, DataRate ("1Mbps"), budget, false);
+  app->Setup (ns3TcpSocket, sinkAddress, 200, 5, DataRate ("1Mbps"), budget, false);
   nodes.Get (0)->AddApplication (app);
   app->SetStartTime (Seconds (1.));
   app->SetStopTime (Seconds (20.));

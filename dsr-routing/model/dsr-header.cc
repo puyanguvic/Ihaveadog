@@ -11,7 +11,10 @@ NS_OBJECT_ENSURE_REGISTERED (DsrHeader);
 
 DsrHeader::DsrHeader ()
   : ID (0xff),
-    m_priority (99)
+    m_txTime (Simulator::Now ()),
+    m_budget (0),
+    m_priority (99),
+    m_flag (false)
 {
 }
 

@@ -13,11 +13,9 @@
 #include "ns3/packet.h"
 #include "ns3/trace-source-accessor.h"
 #include "ns3/udp-socket-factory.h"
-#include "dsr-sink.h"
-#include "timestamp-tag.h"
-#include "flag-tag.h"
-#include "budget-tag.h"
 #include "ns3/boolean.h"
+#include "dsr-sink.h"
+#include "dsr-header.h"
 
 namespace ns3 {
 
@@ -96,12 +94,13 @@ DsrPacketSink::GetAcceptedSockets (void) const
 
 Time DsrPacketSink::GetDelay(const Ptr<Packet> &p) const
 {
-    NS_LOG_FUNCTION (this);
-    TimestampTag t;
-    Time deadline;
-    p->PeekPacketTag (t);
-    deadline = Simulator::Now() - t.GetTimestamp();
-    return deadline;
+  NS_LOG_FUNCTION (this);
+  DsrHeader dsrHeader;
+  p->PeekHeader (dsrHeader);
+  Time txTime = dsrHeader.GetTxTime ();
+  Time deadline;
+  deadline = Simulator::Now() - txTime;
+  return deadline;
 }
 
 void DsrPacketSink::DoDispose (void)
@@ -113,7 +112,6 @@ void DsrPacketSink::DoDispose (void)
   // chain up
   Application::DoDispose ();
 }
-
 
 // Application Methods
 void DsrPacketSink::StartApplication ()    // Called at time specified by Start
@@ -181,22 +179,15 @@ void DsrPacketSink::HandleRead (Ptr<Socket> socket)
         { //EOF
           break;
         }
-      // std::cout << "Packet received! " << std::endl;
-      TimestampTag t;
-      BudgetTag b;
-      FlagTag f;   // rxy: Add flag to examin if flow is the target flow
-      if (packet->PeekPacketTag(f) && f.GetFlagTag())
+      DsrHeader dsrHeader;
+      if (packet->PeekHeader (dsrHeader))
       {
-        if (packet->PeekPacketTag(t))
-        {
-          uint32_t delay = Simulator::Now().GetMicroSeconds() - t.GetMicroSeconds();
-          std::cout << "Delivered!!!!!" << std::endl;
-          // std::cout << "The delay in milliseconds = " << ((double)delay)/1000 << std::endl;
-          // std::cout << "Print the delay in milliseconds" << std::endl;
-          std::ostream* os = m_delayStream->GetStream ();
-          *os << Simulator::Now().GetSeconds() << " Delay " << delay << std::endl;
-        }
-      }      
+        uint32_t delay = Simulator::Now ().GetMicroSeconds () - dsrHeader.GetTxTime ().GetMicroSeconds ();
+        // std::cout << "Delivered" << std::endl;
+        std::ostream* os = m_delayStream->GetStream ();
+        *os << Simulator::Now().GetSeconds() << " Delay " << delay << std::endl;
+
+      }    
       /////
       m_totalRx += packet->GetSize ();
       if (InetSocketAddress::IsMatchingType (from))
