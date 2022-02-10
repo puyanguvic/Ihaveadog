@@ -12,7 +12,10 @@
 #include "ns3/trace-source-accessor.h"
 #include "ns3/tcp-socket-factory.h"
 #include "ns3/boolean.h"
+#include "dsr-header.h"
 #include "dsr-tcp-application.h"
+
+#define MAX_UINT_32 0xffffffff
 
 namespace ns3 {
 
@@ -72,7 +75,9 @@ DsrTcpApplication::DsrTcpApplication ()
   : m_socket (0),
     m_connected (false),
     m_totBytes (0),
-    m_unsentPacket (0)
+    m_unsentPacket (0),
+    m_budget (MAX_UINT_32),
+    m_flag (false)
 {
   NS_LOG_FUNCTION (this);
 }
@@ -82,6 +87,26 @@ DsrTcpApplication::~DsrTcpApplication ()
   NS_LOG_FUNCTION (this);
 }
 
+void
+DsrTcpApplication::Setup (Address peer, uint32_t sendSize, uint64_t maxBytes, uint32_t budget)
+{
+  NS_LOG_FUNCTION (this);
+  m_peer = peer;
+  m_sendSize = sendSize;
+  m_maxBytes = maxBytes;
+  m_budget = budget;
+
+}
+
+void
+DsrTcpApplication::Setup (Address peer, uint32_t sendSize, uint64_t maxBytes)
+{
+  NS_LOG_FUNCTION (this);
+  m_peer = peer;
+  m_sendSize = sendSize;
+  m_maxBytes = maxBytes;
+
+}
 void
 DsrTcpApplication::SetMaxBytes (uint64_t maxBytes)
 {
@@ -203,12 +228,29 @@ void DsrTcpApplication::SendData (const Address &from, const Address &to)
         }
 
       NS_LOG_LOGIC ("sending packet at " << Simulator::Now ());
+      
+      DsrHeader dsrheader;
+      Time txTime = Simulator::Now ();
+      uint32_t budget;
+      if (m_budget == MAX_UINT_32)
+      {
+          budget = 0;
+      }
+      else
+      {
+          budget = m_budget;
+      }
+      bool flag = m_flag;
+      dsrheader.SetTxTime (txTime);
+      dsrheader.SetBudget (budget);
+      dsrheader.SetFlag (flag);
 
       Ptr<Packet> packet;
       if (m_unsentPacket)
         {
           packet = m_unsentPacket;
-          toSend = packet->GetSize ();
+          packet->AddHeader (dsrheader);
+          toSend = packet->GetSize () + dsrheader.GetSerializedSize ();
         }
       else if (m_enableSeqTsSizeHeader)
         {
@@ -216,16 +258,17 @@ void DsrTcpApplication::SendData (const Address &from, const Address &to)
           header.SetSeq (m_seq++);
           header.SetSize (toSend);
           NS_ABORT_IF (toSend < header.GetSerializedSize ());
-          packet = Create<Packet> (toSend - header.GetSerializedSize ());
+          packet = Create<Packet> (toSend - header.GetSerializedSize () -dsrheader.GetSerializedSize ());
           // Trace before adding header, for consistency with PacketSink
           m_txTraceWithSeqTsSize (packet, from, to, header);
           packet->AddHeader (header);
+          packet->AddHeader (dsrheader);
         }
       else
         {
-          packet = Create<Packet> (toSend);
+          packet = Create<Packet> (toSend - dsrheader.GetSerializedSize ());
+          packet->AddHeader (dsrheader);
         }
-
       int actual = m_socket->Send (packet);
       if ((unsigned) actual == toSend)
         {

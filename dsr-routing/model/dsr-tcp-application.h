@@ -43,6 +43,9 @@ public:
    */
   void SetMaxBytes (uint64_t maxBytes);
 
+  void Setup (Address peer, uint32_t sendSize, uint64_t maxBytes, uint32_t budget);
+  void Setup (Address peer, uint32_t sendSize, uint64_t maxBytes);
+
   /**
    * \brief Get the socket this application is attached to.
    * \return pointer to associated socket
@@ -74,6 +77,8 @@ private:
   uint32_t        m_seq {0};      //!< Sequence
   Ptr<Packet>     m_unsentPacket; //!< Variable to cache unsent packet
   bool            m_enableSeqTsSizeHeader {false}; //!< Enable or disable the SeqTsSizeHeader
+  uint32_t        m_budget;
+  bool            m_flag;
 
   /// Traced Callback: sent packets
   TracedCallback<Ptr<const Packet> > m_txTrace;

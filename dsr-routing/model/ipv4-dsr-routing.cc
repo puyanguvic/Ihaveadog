@@ -392,9 +392,28 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
             }
           else
             {
+              // 
               NS_LOG_INFO (" DROP ROUTE: " << allRoutes.at(i)->GetGateway () << " COST: "<< allRoutes.at(i)->GetDistance () );
               if (dsrHeader.GetFlag () == true)
               {
+                // Ipv4Address gateway = allRoutes.at(i)->GetGateway ();
+                // Ptr<Node> nextNode;
+                // NodeList::Iterator listEnd = NodeList::End ();
+                // for (NodeList::Iterator j = NodeList::Begin (); j != listEnd; j++)
+                //   {
+                //     Ptr<Node> node = *j;
+                //     Ptr<Ipv4> ipv4 = node->GetObject<Ipv4> ();
+                //     if (ipv4->GetInterfaceForAddress (gateway) != -1)
+                //       {
+                //         nextNode = node;
+                //         break;
+                //       }
+                //   }
+                // for (uint32_t k = 0; k < nextNode->GetNDevices (); k ++)
+                //   {
+                //     uint32_t fastlane_current_size = nextNode->GetObject<TrafficControlLayer> ()->GetRootQueueDiscOnDevice (nextNode->GetDevice (k))->GetInternalQueue (0)->GetCurrentSize ().GetValue ();
+                //     uint32_t slowlane_current_size = nextNode->GetObject<TrafficControlLayer> ()->GetRootQueueDiscOnDevice (nextNode->GetDevice (k))->GetInternalQueue (1)->GetCurrentSize ().GetValue ();
+                //   }
                 uint32_t q_fast = m_ipv4->GetNetDevice (allRoutes.at(i)->GetInterface ())->GetNode ()->GetObject<TrafficControlLayer> ()->GetRootQueueDiscOnDevice (m_ipv4->GetNetDevice(allRoutes.at (i)->GetInterface()))->GetInternalQueue (0)->GetCurrentSize ().GetValue ();
                 uint32_t q_slow = m_ipv4->GetNetDevice (allRoutes.at(i)->GetInterface ())->GetNode ()->GetObject<TrafficControlLayer> ()->GetRootQueueDiscOnDevice (m_ipv4->GetNetDevice(allRoutes.at (i)->GetInterface()))->GetInternalQueue (1)->GetCurrentSize ().GetValue ();
                 std::cout << "q_fast: "<< q_fast << " q_slow: " << q_slow << std::endl;
@@ -402,6 +421,7 @@ Ipv4DSRRouting::LookupDSRRoute (Ipv4Address dest, Ptr<Packet> p, Ptr<NetDevice> 
               }
             }
         }
+
       NS_LOG_INFO (" FINEROUTE SIZE: "<< fineRoutes.size());
       
       if (numFineRoute == 0)
