@@ -15,6 +15,10 @@ namespace ns3 {
 class Address;
 class Socket;
 
+/**
+ * \ingroup dsr-routing
+ * This moduel comes from bulk Send Application
+ */
 class DsrTcpApplication : public Application
 {
 public:
@@ -30,21 +34,9 @@ public:
 
   /**
    * \brief Set the upper bound for the total number of bytes to send.
-   *
-   * Once this bound is reached, no more application bytes are sent. If the
-   * application is stopped during the simulation and restarted, the 
-   * total number of bytes sent is not reset; however, the maxBytes 
-   * bound is still effective and the application will continue sending 
-   * up to maxBytes. The value zero for maxBytes means that 
-   * there is no upper bound; i.e. data is sent until the application 
-   * or simulation is stopped.
-   *
    * \param maxBytes the upper bound of bytes to send
    */
   void SetMaxBytes (uint64_t maxBytes);
-
-  void Setup (Address peer, uint32_t sendSize, uint64_t maxBytes, uint32_t budget);
-  void Setup (Address peer, uint32_t sendSize, uint64_t maxBytes);
 
   /**
    * \brief Get the socket this application is attached to.
@@ -76,15 +68,12 @@ private:
   TypeId          m_tid;          //!< The type of protocol to use.
   uint32_t        m_seq {0};      //!< Sequence
   Ptr<Packet>     m_unsentPacket; //!< Variable to cache unsent packet
-  bool            m_enableSeqTsSizeHeader {false}; //!< Enable or disable the SeqTsSizeHeader
-  uint32_t        m_budget;
-  bool            m_flag;
+  uint32_t        m_budget;       //!< Budget time in ms
+  bool            m_flag {false}; //!< flag for test
+  // bool            m_enableSeqTsSizeHeader {false}; //!< Enable or disable the SeqTsSizeHeader
 
   /// Traced Callback: sent packets
   TracedCallback<Ptr<const Packet> > m_txTrace;
-
-  /// Callback for tracing the packet Tx events, includes source, destination,  the packet sent, and header
-  TracedCallback<Ptr<const Packet>, const Address &, const Address &, const SeqTsSizeHeader &> m_txTraceWithSeqTsSize;
 
 private:
   /**
@@ -105,4 +94,4 @@ private:
 
 } // namespace ns3
 
-#endif /* DSR_TCP_APPLICATION_H */
+#endif /* BULK_SEND_APPLICATION_H */

@@ -22,13 +22,15 @@ def build(bld):
         'model/dsr-virtual-queue-disc.cc',
         'helper/ipv4-dsr-routing-helper.cc',
         'helper/dsr-application-helper.cc',
+        'helper/dsr-tcp-application-helper.cc',
         'helper/dsr-sink-helper.cc',
         ]
 
     module_test = bld.create_ns3_module_test_library('dsr-routing')
     module_test.source = [
-        # 'test/dsr-routing-test-suite.cc',
-        # 'test/test-dsr-header.cc',
+        'test/dsr-routing-test-suite.cc',
+        'test/test-dsr-header.cc',
+        'test/dsr-tcp-application-test-suite.cc',
         ]
     # Tests encapsulating example programs should be listed here
     if (bld.env['ENABLE_EXAMPLES']):
@@ -52,6 +54,7 @@ def build(bld):
         'model/dsr-virtual-queue-disc.h',
         'helper/ipv4-dsr-routing-helper.h',
         'helper/dsr-application-helper.h',
+        'helper/dsr-tcp-application-helper.h',
         'helper/dsr-sink-helper.h',
         ]
 
