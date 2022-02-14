@@ -43,6 +43,8 @@ public:
    * \return pointer to associated socket
    */
   Ptr<Socket> GetSocket (void) const;
+  void Setup (Ptr<Socket> socket, Address sinkAddress, uint64_t maxBytes, uint32_t budget, bool flag);
+  void Setup (Ptr<Socket> socket, Address sinkAddress, uint64_t maxBytes, bool flag);
 
 protected:
   virtual void DoDispose (void);

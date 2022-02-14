@@ -180,10 +180,10 @@ void DsrPacketSink::HandleRead (Ptr<Socket> socket)
           break;
         }
       DsrHeader dsrHeader;
+      // record packet delay
       if (packet->PeekHeader (dsrHeader))
       {
         uint32_t delay = Simulator::Now ().GetMicroSeconds () - dsrHeader.GetTxTime ().GetMicroSeconds ();
-        // std::cout << "Delivered" << std::endl;
         std::ostream* os = m_delayStream->GetStream ();
         *os << Simulator::Now().GetSeconds() << " Delay " << delay << std::endl;
 

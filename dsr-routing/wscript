@@ -9,6 +9,7 @@
 def build(bld):
     module = bld.create_ns3_module('dsr-routing', ['core'])
     module.source = [
+        'model/dsr-udp-application.cc',
         'model/ipv4-dsr-routing-table-entry.cc',
         'model/dsr-header.cc',
         'model/ipv4-dsr-routing.cc',
@@ -28,6 +29,8 @@ def build(bld):
 
     module_test = bld.create_ns3_module_test_library('dsr-routing')
     module_test.source = [
+        'test/dsr-udp-application-test.cc',
+        'test/dsr-tcp-applciation.cc',
         'test/dsr-routing-test-suite.cc',
         'test/test-dsr-header.cc',
         'test/dsr-tcp-application-test-suite.cc',
@@ -41,6 +44,7 @@ def build(bld):
     headers = bld(features='ns3header')
     headers.module = 'dsr-routing'
     headers.source = [
+        'model/dsr-udp-application.h',
         'model/ipv4-dsr-routing-table-entry.h',
         'model/dsr-header.h',
         'model/ipv4-dsr-routing.h',

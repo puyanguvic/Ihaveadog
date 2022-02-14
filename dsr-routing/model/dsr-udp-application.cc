@@ -27,43 +27,6 @@ DsrUdpApplication::GetTypeId (void)
     .SetParent<Application> ()
     .SetGroupName("dsr-routing") 
     .AddConstructor<DsrUdpApplication> ()
-    // .AddAttribute ("SendSize", "The amount of data to send each time.",
-    //                UintegerValue (512),
-    //                MakeUintegerAccessor (&DsrUdpApplication::m_sendSize),
-    //                MakeUintegerChecker<uint32_t> (1))
-    // .AddAttribute ("Remote", "The address of the destination",
-    //                AddressValue (),
-    //                MakeAddressAccessor (&DsrUdpApplication::m_peer),
-    //                MakeAddressChecker ())
-    // .AddAttribute ("Local",
-    //                "The Address on which to bind the socket. If not set, it is generated automatically.",
-    //                AddressValue (),
-    //                MakeAddressAccessor (&DsrUdpApplication::m_local),
-    //                MakeAddressChecker ())
-    // .AddAttribute ("MaxBytes",
-    //                "The total number of bytes to send. "
-    //                "Once these bytes are sent, "
-    //                "no data  is sent again. The value zero means "
-    //                "that there is no limit.",
-    //                UintegerValue (0),
-    //                MakeUintegerAccessor (&DsrUdpApplication::m_maxBytes),
-    //                MakeUintegerChecker<uint64_t> ())
-    // .AddAttribute ("Protocol", "The type of protocol to use.",
-    //                TypeIdValue (TcpSocketFactory::GetTypeId ()),
-    //                MakeTypeIdAccessor (&DsrUdpApplication::m_tid),
-    //                MakeTypeIdChecker ())
-    // .AddAttribute ("Budget", "The budget of certain packet.",
-    //                UintegerValue (MAX_UINT_32),
-    //                MakeUintegerAccessor (&DsrUdpApplication::m_budget),
-    //                MakeUintegerChecker<uint32_t> ())
-    // .AddAttribute ("EnableFlag",
-    //                "EnableFalg in dsr header for test",
-    //                BooleanValue (false),
-    //                MakeBooleanAccessor (&DsrUdpApplication::m_flag),
-    //                MakeBooleanChecker ())
-    // .AddTraceSource ("Tx", "A new packet is sent",
-    //                  MakeTraceSourceAccessor (&DsrUdpApplication::m_txTrace),
-    //                  "ns3::Packet::TracedCallback")
   ;
   return tid;
 }
@@ -88,28 +51,28 @@ DsrUdpApplication::~DsrUdpApplication ()
 }
 
 
-// void
-// DsrUdpApplication::Setup (Ptr<Socket> socket, Address address, uint32_t packetSize, uint32_t nPackets, DataRate dataRate, uint32_t budget, bool flag)
-// {
-//     m_socket = socket;
-//     m_peer = address;
-//     m_packetSize = packetSize;
-//     m_nPackets = nPackets;
-//     m_dataRate = dataRate;
-//     m_budget = budget * 1000;
-//     m_flag = flag;
-//  }
+void
+DsrUdpApplication::Setup (Ptr<Socket> socket, Address sinkAddress, uint32_t packetSize, uint32_t nPackets, DataRate dataRate, uint32_t budget, bool flag)
+{
+    m_socket = socket;
+    m_peer = sinkAddress;
+    m_packetSize = packetSize;
+    m_nPackets = nPackets;
+    m_dataRate = dataRate;
+    m_budget = budget * 1000;
+    m_flag = flag;
+ }
 
-//  void
-//  DsrUdpApplication::Setup (Ptr<Socket> socket, Address address, uint32_t packetSize, uint32_t nPackets, DataRate dataRate, bool flag)
-//  {
-//     m_socket = socket;
-//     m_peer = address;
-//     m_packetSize = packetSize;
-//     m_nPackets = nPackets;
-//     m_dataRate = dataRate;
-//     m_flag = flag;
-//  }
+ void
+ DsrUdpApplication::Setup (Ptr<Socket> socket, Address sinkAddress, uint32_t packetSize, uint32_t nPackets, DataRate dataRate, bool flag)
+ {
+    m_socket = socket;
+    m_peer = sinkAddress;
+    m_packetSize = packetSize;
+    m_nPackets = nPackets;
+    m_dataRate = dataRate;
+    m_flag = flag;
+ }
  
 
 void

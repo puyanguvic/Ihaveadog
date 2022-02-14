@@ -41,7 +41,7 @@ DsrHeader::GetInstanceTypeId (void) const
 void
 DsrHeader::Print (std::ostream &os) const
 {
-  os << "txTime =" << m_txTime.GetMicroSeconds () << "ms, "
+  os << "txTime =" << m_txTime.GetMilliSeconds () << "ms, "
      << "budget = " << m_budget << "ms, "
      << "priority = " << (uint32_t)m_priority << ", "
      << "flag = " << m_flag << std::endl;

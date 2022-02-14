@@ -95,6 +95,25 @@ DsrTcpApplication::SetMaxBytes (uint64_t maxBytes)
   m_maxBytes = maxBytes;
 }
 
+void
+DsrTcpApplication::Setup (Ptr<Socket> socket, Address sinkAddress, uint64_t maxBytes, uint32_t budget, bool flag)
+{
+  m_socket = socket;
+  m_peer = sinkAddress;
+  m_maxBytes = maxBytes;
+  m_budget = budget;
+  m_flag = flag;
+}
+
+void
+DsrTcpApplication::Setup (Ptr<Socket> socket, Address sinkAddress, uint64_t maxBytes, bool flag)
+{
+  m_socket = socket;
+  m_peer = sinkAddress;
+  m_maxBytes = maxBytes;
+  m_flag = flag;
+}
+
 Ptr<Socket>
 DsrTcpApplication::GetSocket (void) const
 {
@@ -118,7 +137,6 @@ void DsrTcpApplication::StartApplication (void) // Called at time specified by S
 {
   NS_LOG_FUNCTION (this);
   Address from;
-
   // Create the socket if not already
   if (!m_socket)
     {
@@ -212,21 +230,23 @@ void DsrTcpApplication::SendData (const Address &from, const Address &to)
       Ptr<Packet> packet;
       DsrHeader dsrHeader;
       dsrHeader.SetTxTime (Simulator::Now ());
-      dsrHeader.SetBudget (m_budget);
       dsrHeader.SetFlag (m_flag);
       if (m_budget == MAX_UINT_32)
         {
+          dsrHeader.SetBudget (0);
           dsrHeader.SetPriority (99);
         }
       else
         {
+          dsrHeader.SetBudget (m_budget);
           dsrHeader.SetPriority (1);
         }
+
       if (m_unsentPacket)
         {
           packet = m_unsentPacket;
-          toSend = packet->GetSize ();
           packet->AddHeader (dsrHeader);
+          toSend = packet->GetSize ();
         }
       else
         {

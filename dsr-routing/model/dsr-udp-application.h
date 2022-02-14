@@ -10,8 +10,6 @@
 #include "ns3/applications-module.h"
 #include "ns3/internet-module.h"
 #include "ns3/flow-monitor-module.h"
-#include "dsr-udp-application.h"
-
 
 namespace ns3 {
 
@@ -24,8 +22,8 @@ public:
   static TypeId GetTypeId (void);
   virtual ~DsrUdpApplication();
   // application with udp
-  // void Setup (Ptr<Socket> socket, Address address, uint32_t packetSize, uint32_t nPackets, DataRate dataRate, uint32_t budget, bool flag);
-  // void Setup (Ptr<Socket> socket, Address address, uint32_t packetSize, uint32_t nPackets, DataRate dataRate, bool flag);
+  void Setup (Ptr<Socket> socket, Address sinkAddress, uint32_t packetSize, uint32_t nPackets, DataRate dataRate, uint32_t budget, bool flag);
+  void Setup (Ptr<Socket> socket, Address sinkAddress, uint32_t packetSize, uint32_t nPackets, DataRate dataRate, bool flag);
   void ChangeRate (DataRate newDataRate);
   void recv (int numBytesRcvd);
 

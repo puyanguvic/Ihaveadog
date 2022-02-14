@@ -10,7 +10,7 @@ namespace ns3 {
 
 DsrTcpAppHelper::DsrTcpAppHelper (std::string protocol, Address address)
 {
-  m_factory.SetTypeId ("ns3::BulkSendApplication");
+  m_factory.SetTypeId ("ns3::DsrTcpApplication");
   m_factory.Set ("Protocol", StringValue (protocol));
   m_factory.Set ("Remote", AddressValue (address));
 }
