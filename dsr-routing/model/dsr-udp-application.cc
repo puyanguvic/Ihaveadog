@@ -8,7 +8,10 @@
 #include "ns3/internet-module.h"
 #include "ns3/flow-monitor-module.h"
 #include "dsr-udp-application.h"
-#include "dsr-header.h"
+#include "budget-tag.h"
+#include "priority-tag.h"
+#include "flag-tag.h"
+#include "timestamp-tag.h"
 
 
 #define MAX_UINT_32 0xffffffff
@@ -102,25 +105,31 @@ DsrUdpApplication::StopApplication ()
 void
 DsrUdpApplication::SendPacket()
 {
-    DsrHeader dsrheader;
+
+    TimestampTag txTimeTag;
+    FlagTag flagTag;
+    BudgetTag budgetTag;
+    PriorityTag priorityTag;
     
-    Ptr<Packet> packet = Create <Packet> (m_packetSize - dsrheader.GetSerializedSize ());
+    Ptr<Packet> packet = Create <Packet> (m_packetSize);
     Time txTime = Simulator::Now ();
-    uint32_t budget;
     if (m_budget == MAX_UINT_32)
     {
-        budget = 0;
+        budgetTag.SetBudget (0);
+        priorityTag.SetPriority (99);
     }
     else
     {
-        budget = m_budget;
+        budgetTag.SetBudget (m_budget);
+        priorityTag.SetPriority (1);
     }
-    bool flag = m_flag;
-    dsrheader.SetTxTime (txTime);
-    dsrheader.SetBudget (budget);
-    dsrheader.SetFlag (flag);
-    packet->AddHeader (dsrheader);
-    // std::cout << "send size: " << packet->GetSize () << std::endl;
+    flagTag.SetFlagTag (m_flag);
+    txTimeTag.SetTimestamp (txTime);
+
+    packet->AddByteTag (txTimeTag);
+    packet->AddByteTag (flagTag);
+    packet->AddByteTag (budgetTag);
+    packet->AddByteTag (priorityTag);
     m_socket->Send (packet);
     if(++ m_packetSent < m_nPackets)
     {

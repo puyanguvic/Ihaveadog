@@ -179,15 +179,24 @@ void DsrPacketSink::HandleRead (Ptr<Socket> socket)
         { //EOF
           break;
         }
-      DsrHeader dsrHeader;
-      // record packet delay
-      if (packet->PeekHeader (dsrHeader))
-      {
-        uint32_t delay = Simulator::Now ().GetMicroSeconds () - dsrHeader.GetTxTime ().GetMicroSeconds ();
-        std::ostream* os = m_delayStream->GetStream ();
-        *os << Simulator::Now().GetSeconds() << " Delay " << delay << std::endl;
+      std::ostream* os = m_delayStream->GetStream ();
+      *os << Simulator::Now ().GetMicroSeconds () << std::endl;
 
-      }    
+      // DsrHeader dsrHeader;
+      // if (packet->PeekHeader (dsrHeader))
+      // {
+      //   // record packet delay
+      //   std::ostream* os = m_delayStream->GetStream ();
+      //   *os << dsrHeader.GetTxTime ().GetMicroSeconds () << " " << packet->GetSize () << std::endl;
+      // }
+      // if (packet->PeekHeader (dsrHeader))
+      // {
+      //   // uint32_t delay = Simulator::Now ().GetMicroSeconds () - dsrHeader.GetTxTime ().GetMicroSeconds ();
+      //   std::ostream* os = m_delayStream->GetStream ();
+      //   *os << dsrHeader.GetTxTime ().GetMicroSeconds () << " " << packet->GetSize () << std::endl;
+      //   // *os << Simulator::Now().GetSeconds() << " Delay " << delay << std::endl;
+
+      // }    
       /////
       m_totalRx += packet->GetSize ();
       if (InetSocketAddress::IsMatchingType (from))

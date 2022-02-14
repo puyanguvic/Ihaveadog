@@ -13,7 +13,10 @@
 #include "ns3/tcp-socket-factory.h"
 #include "ns3/boolean.h"
 #include "dsr-tcp-application.h"
-#include "dsr-header.h"
+#include "budget-tag.h"
+#include "priority-tag.h"
+#include "flag-tag.h"
+#include "timestamp-tag.h"
 
 #define MAX_UINT_32 0xffffffff
 
@@ -228,39 +231,38 @@ void DsrTcpApplication::SendData (const Address &from, const Address &to)
 
       NS_LOG_LOGIC ("sending packet at " << Simulator::Now ());
       Ptr<Packet> packet;
-      DsrHeader dsrHeader;
-      dsrHeader.SetTxTime (Simulator::Now ());
-      dsrHeader.SetFlag (m_flag);
+
+      TimestampTag txTimeTag;
+      FlagTag flagTag;
+      BudgetTag budgetTag;
+      PriorityTag priorityTag;
+
+      txTimeTag.SetTimestamp (Simulator::Now ());
+      flagTag.SetFlagTag (m_flag);
       if (m_budget == MAX_UINT_32)
         {
-          dsrHeader.SetBudget (0);
-          dsrHeader.SetPriority (99);
+          budgetTag.SetBudget (0);
+          priorityTag.SetPriority (99);
         }
       else
         {
-          dsrHeader.SetBudget (m_budget);
-          dsrHeader.SetPriority (1);
+          budgetTag.SetBudget (m_budget);
+          priorityTag.SetPriority (1);
         }
 
       if (m_unsentPacket)
         {
           packet = m_unsentPacket;
-          packet->AddHeader (dsrHeader);
           toSend = packet->GetSize ();
         }
       else
         {
-          if (toSend - dsrHeader.GetSerializedSize () >= 0)
-            {
-              packet = Create<Packet> (toSend - dsrHeader.GetSerializedSize ());
-            }
-          else
-            {
-              packet = Create<Packet> (toSend);
-            }
-          packet->AddHeader (dsrHeader);
+          packet = Create<Packet> (toSend);
         }
-
+    packet->AddByteTag (txTimeTag);
+    packet->AddByteTag (flagTag);
+    packet->AddByteTag (budgetTag);
+    packet->AddByteTag (priorityTag);
       int actual = m_socket->Send (packet);
       if ((unsigned) actual == toSend)
         {
